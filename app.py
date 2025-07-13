@@ -1,13 +1,17 @@
 import streamlit as st
 import pandas as pd
+from datetime import datetime
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from model.image_captioning import generate_from_image
 from model.caption_generator import generate_caption
 from model.hashtag_generator import suggest_hashtags
 
+
 st.set_page_config(page_title="InfluenceBuddy", layout="wide")
 
-st.sidebar.title("📂 InfluenceBuddy")
+st.sidebar.title("InfluencerBuddy😊")
 section = st.sidebar.radio("Navigate", [
     "Home", 
     "Upload CSV", 
@@ -24,7 +28,52 @@ if "df" not in st.session_state:
 # 🏠 Home Section
 if section == "Home":
     st.title("🏆 Welcome to InfluenceBuddy")
-    st.write("Helping beginner influencers grow smarter with AI-powered insights, captions, and strategies.")
+
+    st.markdown("""
+    ## Welcome to InfluenceBuddy 💡
+
+    **InfluenceBuddy** is an AI-powered platform designed to help **influencers, content creators, and marketers** grow smarter and faster by understanding their audience better.
+
+    ### 🔍 What does this app do?
+
+    - 📈 Analyze your social media performance using uploaded CSV data  
+    - 🧠 Generate smart, engaging **captions** for your posts based on tone and category  
+    - 🏷️ Suggest high-performing **hashtags** that suit your content  
+    - 🖼️ Create **image-based captions & hashtags** using AI  
+    - 📅 Discover the **best days & times to post** to maximize reach and engagement  
+    - 📊 View personalized **visual dashboards** to track likes, comments, and shares over time  
+
+    ### 📁 How to Get Started:
+
+    1. Upload your **social media CSV file** from the sidebar under 'Upload CSV'  
+    2. Navigate to the **Dashboard** to analyze your performance  
+    3. Use the **Caption Generator**, **Hashtag Tool**, and **Image Captioning** tools to enhance your content  
+    4. Optimize your strategy using data insights  
+
+    ---
+    ### 📥 Supported Platforms:
+
+    - **Instagram**  
+    - **YouTube**  
+    - **Facebook**  
+    - **Twitter (X)**  
+    - **LinkedIn**
+
+    ### 📤 How to Get Your CSV File:
+
+    - **Instagram**: Go to *Settings → Your Activity → Download Your Information*  
+    - **Facebook**: Go to *Settings → Your Facebook Information → Download Your Information*  
+    - **Twitter (X)**: Go to *Settings → Account → Download an archive of your data*  
+    - **YouTube**: Visit [Google Takeout](https://takeout.google.com) and select YouTube  
+    - **LinkedIn**: *Settings & Privacy → Get a copy of your data*
+
+    ---
+
+    Whether you're just starting your influencer journey or want to boost your growth,  
+    **InfluenceBuddy is here to support you every step of the way. 💫**
+    """)
+
+
 
 # 📁 Upload CSV Section
 elif section == "Upload CSV":
@@ -37,21 +86,56 @@ elif section == "Upload CSV":
             st.session_state.df = df
             st.success("✅ File uploaded successfully.")
             st.dataframe(df)
+
+            # 👇 Add this line to show the detected column names
+            st.write("📄 Columns detected in CSV:", df.columns.tolist())
         except Exception as e:
             st.error(f"❌ Error reading file: {e}")
 
 # 📊 Dashboard Section
 elif section == "Dashboard":
     st.title("📊 Performance Dashboard")
-    df = st.session_state.df
     
-    if df is not None:
-        try:
-            st.line_chart(df[["Likes", "Comments", "Reach", "Saves"]])
-        except KeyError:
-            st.warning("⚠️ Please make sure your CSV has columns: Likes, Comments, Reach, Saves")
-    else:
-        st.warning("❗ Please upload a CSV first from the 'Upload CSV' section.")
+    df = st.session_state.df  # Use uploaded file
+
+    if df is None:
+        st.warning("⚠️ Please upload your CSV first from the 'Upload CSV' section.")
+        st.stop()
+
+    try:
+        # ✅ Overall engagement chart
+        st.subheader("📈 Engagement Overview")
+        st.line_chart(df[["likes", "comments", "shares"]])
+
+        # 🗓️ Average Likes by Day (using 'post_day')
+        if 'post_day' in df.columns:
+            st.subheader("🗓️ Average Likes by Day")
+            day_avg = df.groupby('post_day')['likes'].mean().sort_values(ascending=False)
+            st.bar_chart(day_avg)
+        else:
+            st.info("ℹ️ 'post_day' column not found for day-wise analysis.")
+
+        # ⏰ Average Likes by Hour (using 'post_time')
+        if 'post_time' in df.columns:
+            df['hour'] = pd.to_datetime(df['post_time'], errors='coerce').dt.hour
+
+            st.subheader("⏰ Average Likes by Hour")
+            hour_avg = df.groupby('hour')['likes'].mean().sort_index()
+            st.line_chart(hour_avg)
+        else:
+            st.info("ℹ️ 'post_time' column not found for hour-wise analysis.")
+
+        # 📌 Likes by Post Type
+        if 'post_type' in df.columns:
+            st.subheader("📌 Average Likes by Post Type")
+            type_avg = df.groupby('post_type')['likes'].mean().sort_values(ascending=False)
+            st.bar_chart(type_avg)
+        else:
+            st.info("ℹ️ 'post_type' column not found for post type analysis.")
+
+    except KeyError as e:
+        st.warning(f"⚠️ Missing expected columns: {e}")
+
 
 # ✍️ Caption Generator
 elif section == "Caption Generator":
@@ -97,4 +181,4 @@ elif section == "Image Caption & Hashtag":
             st.write(caption)
 
             st.subheader("Suggested Hashtags")
-            st.write(", ".join(hashtags))
+            st.write(", ".join(hashtags)) 
