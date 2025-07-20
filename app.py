@@ -8,27 +8,25 @@ from model.image_captioning import generate_from_image
 from model.caption_generator import generate_caption
 from model.hashtag_generator import suggest_hashtags
 
-
 st.set_page_config(page_title="InfluenceBuddy", layout="wide")
 
-st.sidebar.title("InfluencerBuddy😊")
+st.sidebar.title("InfluenceBuddy")
 section = st.sidebar.radio("Navigate", [
-    "Home", 
-    "Upload CSV", 
-    "Dashboard", 
-    "Caption Generator", 
-    "Hashtag Tool", 
+    "Home",
+    "Upload CSV",
+    "Dashboard",
+    "Caption Generator",
+    "Hashtag Tool",
     "Image Caption & Hashtag"
 ])
 
-# 🔁 Initialize df globally in session state
+# Initialize df globally in session state
 if "df" not in st.session_state:
     st.session_state.df = None
 
-# 🏠 Home Section
+# Home Section
 if section == "Home":
-    st.title("🏆 Welcome to InfluenceBuddy")
-
+    st.title("🏆 Welcome to InfluencerBuddy")
     st.markdown("""
     ## Welcome to InfluenceBuddy 💡
 
@@ -64,7 +62,7 @@ if section == "Home":
     - **Instagram**: Go to *Settings → Your Activity → Download Your Information*  
     - **Facebook**: Go to *Settings → Your Facebook Information → Download Your Information*  
     - **Twitter (X)**: Go to *Settings → Account → Download an archive of your data*  
-    - **YouTube**: Visit [Google Takeout](https://takeout.google.com) and select YouTube  
+    - **YouTube**: Visit Google Takeout and select YouTube  
     - **LinkedIn**: *Settings & Privacy → Get a copy of your data*
 
     ---
@@ -73,29 +71,23 @@ if section == "Home":
     **InfluenceBuddy is here to support you every step of the way. 💫**
     """)
 
-
-
-# 📁 Upload CSV Section
+# Upload CSV Section
 elif section == "Upload CSV":
     st.title("📁 Upload Your Instagram Data")
     uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
-    
     if uploaded_file:
         try:
             df = pd.read_csv(uploaded_file)
             st.session_state.df = df
             st.success("✅ File uploaded successfully.")
             st.dataframe(df)
-
-            # 👇 Add this line to show the detected column names
             st.write("📄 Columns detected in CSV:", df.columns.tolist())
         except Exception as e:
             st.error(f"❌ Error reading file: {e}")
 
-# 📊 Dashboard Section
+# Dashboard Section
 elif section == "Dashboard":
     st.title("📊 Performance Dashboard")
-    
     df = st.session_state.df  # Use uploaded file
 
     if df is None:
@@ -103,11 +95,15 @@ elif section == "Dashboard":
         st.stop()
 
     try:
-        # ✅ Overall engagement chart
+        # Overall engagement chart
         st.subheader("📈 Engagement Overview")
-        st.line_chart(df[["likes", "comments", "shares"]])
+        engagement_cols = [col for col in ["likes", "comments", "shares"] if col in df.columns]
+        if engagement_cols:
+            st.line_chart(df[engagement_cols])
+        else:
+            st.info("ℹ️ No 'likes', 'comments', or 'shares' columns found in your data.")
 
-        # 🗓️ Average Likes by Day (using 'post_day')
+        # Average Likes by Day
         if 'post_day' in df.columns:
             st.subheader("🗓️ Average Likes by Day")
             day_avg = df.groupby('post_day')['likes'].mean().sort_values(ascending=False)
@@ -115,17 +111,16 @@ elif section == "Dashboard":
         else:
             st.info("ℹ️ 'post_day' column not found for day-wise analysis.")
 
-        # ⏰ Average Likes by Hour (using 'post_time')
+        # Average Likes by Hour
         if 'post_time' in df.columns:
             df['hour'] = pd.to_datetime(df['post_time'], errors='coerce').dt.hour
-
             st.subheader("⏰ Average Likes by Hour")
             hour_avg = df.groupby('hour')['likes'].mean().sort_index()
             st.line_chart(hour_avg)
         else:
             st.info("ℹ️ 'post_time' column not found for hour-wise analysis.")
 
-        # 📌 Likes by Post Type
+        # Likes by Post Type
         if 'post_type' in df.columns:
             st.subheader("📌 Average Likes by Post Type")
             type_avg = df.groupby('post_type')['likes'].mean().sort_values(ascending=False)
@@ -136,8 +131,7 @@ elif section == "Dashboard":
     except KeyError as e:
         st.warning(f"⚠️ Missing expected columns: {e}")
 
-
-# ✍️ Caption Generator
+# Caption Generator
 elif section == "Caption Generator":
     st.title("✍️ Caption Generator")
     topic = st.text_input("Enter a topic")
@@ -153,12 +147,11 @@ elif section == "Caption Generator":
         else:
             st.warning("⚠️ Please enter a topic.")
 
-# 📌 Hashtag Recommender
+# Hashtag Recommender
 elif section == "Hashtag Tool":
     st.title("📌 Hashtag Recommender")
     topic = st.text_input("Enter your post topic")
     category = st.selectbox("Select content category", ["Lifestyle", "Food", "Tech", "Fashion"])
-
     if st.button("Suggest Hashtags"):
         if topic:
             hashtags = suggest_hashtags(topic, category)
@@ -167,18 +160,15 @@ elif section == "Hashtag Tool":
         else:
             st.warning("⚠️ Please enter a topic.")
 
-# 🖼️ Image Caption & Hashtag
+# Image Caption & Hashtag
 elif section == "Image Caption & Hashtag":
     st.title("🖼️ Image Caption & Hashtag")
     uploaded_image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
-
     if uploaded_image:
         st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
-
         if st.button("Generate from Image"):
             caption, hashtags = generate_from_image(uploaded_image)
             st.subheader("Generated Caption")
             st.write(caption)
-
             st.subheader("Suggested Hashtags")
-            st.write(", ".join(hashtags)) 
+            st.write(", ".join(hashtags))
