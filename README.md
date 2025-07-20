@@ -1,5 +1,5 @@
 
-# 🎯 InfluenceBuddy
+# 🎯 InfluencerBuddy
 
 Helping beginner influencers grow smarter with AI-powered captions, hashtags, and performance insights.
 
