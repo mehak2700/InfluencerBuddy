@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import matplotlib.pyplot as plt
-import seaborn as sns
+
 
 from model.image_captioning import generate_from_image
 from model.caption_generator import generate_caption
